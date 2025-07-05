@@ -1,4 +1,7 @@
+
 {
+
+"homepage": "https://rim-esh.github.io/dtc",
   "name": "dream-tech-college",
   "version": "0.1.0",
   "private": true,
@@ -16,6 +19,7 @@
     "bootstrap": "^5.3.7",
     "canvas-confetti": "^1.9.3",
     "framer-motion": "^12.23.0",
+    "gh-pages": "^6.3.0",
     "papaparse": "^5.5.3",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
@@ -31,6 +35,8 @@
     "yet-another-react-lightbox": "^3.24.0"
   },
   "scripts": {
+    "predeploy": "npm run build",
+"deploy": "gh-pages -d build"
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
