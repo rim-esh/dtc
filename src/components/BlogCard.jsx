@@ -40,7 +40,7 @@ const BlogCard = ({ blog }) => {
                 </span>
               </div>
               
-              <Link to={`/blog/${blog.id}`} className="btn btn-sm btn-outline-primary d-flex align-items-center">
+              < Link to={`/blog/${blog.title.toLowerCase().split(' ').join('-')}`} className="btn btn-sm btn-outline-primary d-flex align-items-center">
                 Read More <FiArrowRight className="ms-2" />
               </Link>
             </div>

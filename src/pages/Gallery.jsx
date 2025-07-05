@@ -10,7 +10,7 @@ const Gallery = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [filterOpen, setFilterOpen] = useState(false);
+  // const [filterOpen, setFilterOpen] = useState(false);
   
   useEffect(() => {
     AOS.init({ 

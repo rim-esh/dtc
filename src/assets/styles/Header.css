@@ -22,6 +22,7 @@
   padding: 0.6rem 0;
   transition: all 0.3s ease;
   z-index: 1000;
+  position: relative; /* Needed for z-index stacking context */
 }
 
 .top-contact-bar.scrolled {
@@ -35,6 +36,7 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  padding: 0 15px; /* Added padding for smaller screens */
 }
 
 .contact-info {
@@ -63,11 +65,11 @@
 }
 
 .contact-item.whatsapp {
-  color: #25d366;
+  color: #25d366; /* WhatsApp green */
 }
 
 .contact-item.whatsapp:hover {
-  color: #1eb955;
+  color: #1eb955; /* Darker green on hover */
 }
 
 .top-buttons {
@@ -127,7 +129,7 @@
   top: 0;
   left: 0;
   right: 0;
-  animation: slideDown 0.5s ease;
+  animation: slideDown 0.5s ease forwards; /* Use forwards to keep the final state */
 }
 
 @keyframes slideDown {
@@ -144,6 +146,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 0;
+  padding: 1rem 15px; /* Added padding for smaller screens */
 }
 
 .logo-container {
@@ -246,91 +249,137 @@
   align-items: center;
   padding: 1.2rem 2.2rem;
   text-decoration: none;
-  color: var(--dark);
+  color: var(--dark); /* Default color */
   font-weight: 600;
   font-size: 1rem;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
 
-.nav-link:hover,
-.nav-item.active .nav-link {
-  color: var(--primary);
-  background: rgba(13, 110, 253, 0.05);
-}
-
-/* --- Improved Professional Underline Hover Effect for Desktop Nav --- */
+/* --- Refined Professional Underline Hover/Active Effect for Desktop Nav --- */
 @media (min-width: 993px) {
+  .nav-list {
+    gap: 2.2rem; /* Adjusted for better spacing */
+  }
+
   .nav-link {
     position: relative;
-    overflow: visible;
+    overflow: hidden; /* Important for the ::after to not bleed outside */
     background: none;
     box-shadow: none;
-    transition: color 0.22s, background 0.22s, box-shadow 0.22s, transform 0.18s;
+    color: var(--dark); /* Ensure default color */
+    /* Smoother transition for color and transform */
+    transition: color 0.25s ease-in-out, transform 0.25s ease-in-out;
     font-size: 1.08rem;
     padding: 1.1rem 1.7rem 1.1rem 1.7rem;
     letter-spacing: 0.01em;
+    z-index: 2; /* Ensure link is above the pseudo-element when not active */
   }
+
+  /* Underline pseudo-element */
   .nav-link::after {
     content: '';
     position: absolute;
-    left: 28%;
-    right: 28%;
-    bottom: 0.7em;
-    height: 2.5px;
-    background: linear-gradient(90deg, #0d6efd 0%, #0dcaf0 100%);
+    left: 50%; /* Start from the exact center */
+    bottom: 0.7em; /* Position of the underline */
+    height: 3px; /* Thickness of the underline */
+    background: linear-gradient(90deg, var(--primary) 0%, var(--info) 100%); /* Gradient color */
     border-radius: 2px;
-    transform: scaleX(0);
-    transition: transform 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.22s;
-    opacity: 0.95;
-    z-index: 1;
-  }
-  .nav-link:hover::after,
-  .nav-item.open > .nav-link::after {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-  .nav-link:hover,
-  .nav-item.open > .nav-link {
-    color: #0d6efd;
-    background: none;
-    box-shadow: none;
-    transform: translateY(-1.5px) scale(1.04);
-  }
-  .nav-list {
-    gap: 2.5rem;
-  }
-  .dropdown-menu {
-    margin-top: 0.8rem;
-    animation: fadeInDown 0.32s cubic-bezier(0.4,0,0.2,1);
-    border-radius: 14px;
-    min-width: 220px;
-    box-shadow: 0 8px 32px rgba(13,110,253,0.10);
-  }
-}
-
-@keyframes fadeIn {
-  from {
+    /* This is the key: translateX(-50%) centers it, scaleX(0) hides it */
+    transform: translateX(-50%) scaleX(0); /* Hidden by default, scaled from center */
+    width: 70%; /* Adjust this percentage to control underline length */
+    transform-origin: center; /* Ensures scaling happens from the center */
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s;
     opacity: 0;
-    transform: translateY(10px);
+    z-index: 1; /* Under the text */
   }
-  to {
+
+  /* Hover state */
+  .nav-link:hover {
+    color: var(--primary); /* Text color on hover */
+    transform: translateY(-2px); /* Subtle lift on hover */
+  }
+
+  .nav-link:hover::after {
+    transform: translateX(-50%) scaleX(1); /* Expand underline from center */
     opacity: 1;
-    transform: translateY(0);
+  }
+
+  /* Active link styling (for current page) */
+  .nav-item .nav-link.active-nav-link {
+    color: var(--primary); /* Active text color */
+    font-weight: 700; /* Make it bolder when active */
+    transform: translateY(-2px); /* Lift slightly when active */
+  }
+
+  .nav-item .nav-link.active-nav-link::after {
+    transform: translateX(-50%) scaleX(1); /* Show underline when active */
+    opacity: 1;
+    background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary) 100%); /* Stronger gradient for active */
+  }
+
+  /* Ensure dropdown parents also apply active styling when opened */
+  .nav-item.open > .nav-link {
+    color: var(--primary); /* Text color when dropdown is open */
+    transform: translateY(-2px);
+  }
+
+  .nav-item.open > .nav-link::after {
+    transform: translateX(-50%) scaleX(1); /* Underline stays active when dropdown is open */
+    opacity: 1;
+    background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary) 100%);
+  }
+
+  /* Dropdown menu styling */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    opacity: 0;
+    visibility: hidden;
+    min-width: 220px;
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(13, 110, 253, 0.15);
+    padding: 10px;
+    z-index: 100;
+    /* --- MODIFIED TRANSITION HERE --- */
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, visibility 0.3s,
+                /* Delay pointer-events: none when closing */
+                pointer-events 0s linear 0.3s; /* Apply after 0.3s delay when going to 'none' */
+    pointer-events: none;
+  }
+
+  .nav-item.open .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0); /* Slide up into view */
+    pointer-events: auto; /* Enable interaction */
+  }
+
+  .dropdown-item {
+    display: block;
+    padding: 12px 20px;
+    color: var(--dark);
+    text-decoration: none;
+    font-size: 1rem;
+    border-radius: 10px; /* Slightly less rounded than menu for items */
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .dropdown-item:hover {
+    background-color: rgba(13, 110, 253, 0.08);
+    color: var(--primary);
   }
 }
 
-/* --- Adjust nav-list gap for desktop --- */
-@media (min-width: 993px) {
-  .nav-list {
-    gap: 2.2rem;
-  }
-}
 
 /* Header Action */
 .header-action {
   display: flex;
   align-items: center;
+  padding-right: 15px; /* Added padding for smaller screens */
 }
 
 .action-btn {
@@ -361,6 +410,7 @@
   padding: 0.5rem;
   border-radius: 8px;
   transition: background 0.3s ease;
+  z-index: 1200; /* Ensure it's above everything */
 }
 
 .mobile-toggle:hover {
@@ -423,6 +473,7 @@
 
 .mobile-nav-item {
   margin-bottom: 0.5rem;
+  position: relative; /* For dropdown */
 }
 
 .mobile-nav-link {
@@ -437,7 +488,8 @@
   transition: all 0.3s ease;
 }
 
-.mobile-nav-link:hover {
+.mobile-nav-link:hover,
+.mobile-nav-link.active-nav-link { /* Active state for mobile */
   background: rgba(13, 110, 253, 0.05);
   color: var(--primary);
 }
@@ -447,11 +499,43 @@
   font-size: 1.2rem;
 }
 
+/* Mobile dropdown */
+.mobile-dropdown-menu {
+  list-style: none;
+  padding-left: 20px; /* Indent mobile dropdown items */
+  margin-top: 5px;
+  max-height: 0; /* Initially hidden */
+  overflow: hidden;
+  transition: max-height 0.3s ease-out; /* Smooth open/close */
+}
+
+.mobile-nav-item.open .mobile-dropdown-menu {
+  max-height: 300px; /* Adjust as needed to fit all dropdown items */
+}
+
+.mobile-dropdown-item {
+  display: block;
+  padding: 0.8rem 1rem;
+  text-decoration: none;
+  color: var(--dark);
+  font-size: 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mobile-dropdown-item:hover,
+.mobile-dropdown-item.active-nav-link { /* Active state for mobile dropdown items */
+  background-color: rgba(13, 110, 253, 0.05);
+  color: var(--primary);
+}
+
+
 .mobile-actions {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   margin-bottom: 2rem;
+  padding: 0 1.5rem;
 }
 
 .mobile-action-btn {
@@ -541,7 +625,7 @@
   .nav-list {
     gap: 0.3rem;
   }
-  
+
   .nav-link {
     padding: 0.8rem 1rem;
     font-size: 0.95rem;
@@ -550,64 +634,45 @@
 
 @media (max-width: 992px) {
   .top-contact-bar {
-    padding: 0.5rem 0;
-  }
-  
-  .contact-info {
-    gap: 1rem;
-  }
-  
-  .contact-item {
-    font-size: 0.85rem;
-  }
-  
-  .top-btn {
-    padding: 0.4rem 1rem;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .top-contact-bar {
     display: none;
   }
-  
+
   .desktop-nav {
     display: none;
   }
-  
+
   .header-action {
     display: none;
   }
-  
+
   .mobile-toggle {
     display: block;
   }
-  
+
   .logo-text h1 {
     font-size: 1.5rem;
   }
-  
+
   .logo-text p {
     font-size: 0.7rem;
   }
-  
+
   .logo-icon {
     width: 40px;
     height: 40px;
     margin-right: 10px;
   }
-  
+
   .logo-circle.primary {
     width: 32px;
     height: 32px;
   }
-  
+
   .logo-circle.warning {
     width: 16px;
     height: 16px;
   }
-  
+
   .logo-circle.info {
     width: 12px;
     height: 12px;
@@ -620,24 +685,17 @@
   .mobile-nav {
     width: 280px;
   }
-  
+
   .mobile-nav-header {
     padding: 1rem;
   }
-  
+
   .mobile-nav-content {
     padding: 1rem;
   }
-  
+
   .mobile-nav-link {
     font-size: 1rem;
     padding: 0.8rem;
-  }
-}
-
-/* --- Adjust nav-list gap for desktop --- */
-@media (min-width: 993px) {
-  .nav-list {
-    gap: 2.2rem;
   }
 }

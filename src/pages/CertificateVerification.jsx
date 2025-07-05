@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaSearch, FaDownload, FaCertificate, FaRegSmileBeam } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaCertificate, FaRegSmileBeam, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import { PDFDownloadLink, Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
-import {QRCodeCanvas} from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import Papa from 'papaparse';
-import certificateBg from '../assets/images/certificate_bg.jpg';
+import DatePicker from 'react-datepicker'; // Import DatePicker component
+import 'react-datepicker/dist/react-datepicker.css'; // Import DatePicker CSS
+import certificateBg from '../assets/images/certificate_bg.jpg'; // Ensure this path is correct
 
 const CertificateVerification = () => {
   const [rollNumber, setRollNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState(null); // State for Date of Birth
   const [certificate, setCertificate] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,6 +18,19 @@ const CertificateVerification = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const certificateRef = useRef(null);
 
+  // Utility function to format date from YYYY-MM-DD to DD/MMM/YYYY
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      const options = { year: 'numeric', month: 'short', day: '2-digit' };
+      return date.toLocaleDateString('en-GB', options).replace(/ /g, '/');
+    } catch (e) {
+      console.error("Error formatting date:", dateString, e);
+      return dateString; // Return original if formatting fails
+    }
+  };
+
   // Fetch certificate data from Google Sheets
   useEffect(() => {
     const fetchCertificateData = async () => {
@@ -22,12 +38,20 @@ const CertificateVerification = () => {
         setLoading(true);
         const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSJW0XGNkFm8BHWHX_QVYtvmBdR4UiunWgAaL3XpXxotw-2Es_SV1xWh-ILBfwwEBWXmF17qj8wf1Ew/pub?output=csv');
         const csvData = await response.text();
-        
+
         Papa.parse(csvData, {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            setCertificates(results.data);
+            // Process dates from YYYY-MM-DD to DD/MMM/YYYY for display
+            const formattedCertificates = results.data.map(cert => ({
+              ...cert,
+              DOB_AD: formatDateForDisplay(cert.DOB_AD),
+              Print_Join_Date: formatDateForDisplay(cert.Print_Join_Date),
+              Complete_Date: formatDateForDisplay(cert.Complete_Date),
+              Issue_Date: formatDateForDisplay(cert.Issue_Date)
+            }));
+            setCertificates(formattedCertificates);
             setIsInitialized(true);
             setLoading(false);
           },
@@ -52,9 +76,9 @@ const CertificateVerification = () => {
     setError('');
     setCertificate(null);
     setShowSuccess(false);
-    
-    if (!rollNumber) {
-      setError('Please enter your Roll Number');
+
+    if (!rollNumber || !dateOfBirth) {
+      setError('Please enter both your Roll Number and Date of Birth.');
       return;
     }
 
@@ -64,29 +88,32 @@ const CertificateVerification = () => {
     }
 
     setLoading(true);
-    
-    // Simulate API call delay
+
+    // Format the selected dateOfBirth to YYYY-MM-DD for comparison
+    const formattedDOB = dateOfBirth.toISOString().split('T')[0];
+
     setTimeout(() => {
       try {
-        // Normalize roll number for case-insensitive comparison
         const normalizedRollNumber = rollNumber.trim().toUpperCase();
-        
+
         const foundCertificate = certificates.find(
-          cert => cert.Roll_No.trim().toUpperCase() === normalizedRollNumber
+          cert => cert.Roll_No.trim().toUpperCase() === normalizedRollNumber &&
+                   cert.DOB_AD.includes(formattedDOB.substring(8, 10)) && // Check day
+                   cert.DOB_AD.includes(new Date(formattedDOB).toLocaleString('en-US', { month: 'short' })) && // Check month (short name)
+                   cert.DOB_AD.includes(formattedDOB.substring(0, 4)) // Check year
         );
 
         if (foundCertificate) {
           setCertificate(foundCertificate);
           setShowSuccess(true);
-          
-          // Scroll to certificate section
+
           setTimeout(() => {
             if (certificateRef.current) {
               certificateRef.current.scrollIntoView({ behavior: 'smooth' });
             }
           }, 100);
         } else {
-          setError('Certificate not found. Please check your Roll Number and try again.');
+          setError('Certificate not found. Please check your Roll Number and Date of Birth and try again.');
         }
       } catch (err) {
         setError('Error searching for certificate');
@@ -97,7 +124,6 @@ const CertificateVerification = () => {
     }, 500);
   };
 
-  // Dynamic success animation
   const SuccessAnimation = () => (
     <div className="success-animation">
       <div className="animation-circle"></div>
@@ -113,22 +139,22 @@ const CertificateVerification = () => {
     <Document>
       <Page size="A4" style={styles.page}>
         <Image src={certificateBg} style={styles.backgroundImage} />
-        
+
         {/* Certificate Content */}
         <View style={styles.content}>
           <Text style={styles.header}>Dream Technical College</Text>
           <Text style={styles.title}>Certificate of Completion</Text>
-          
+
           <Text style={styles.bodyText}>
-            This is to certify that {certificate.Print_Name}, daughter/son of {certificate.Parents_Name}, 
-            a resident of {certificate.Address}, was a bona fide student at this college. 
-            She/He joined the {certificate.Course_Name} course on {certificate.Print_Join_Date} AD 
-            and completed it on {certificate.Complete_Date} AD with a Grade Point Average (GPA) of {certificate.Grade}. 
+            This is to certify that <Text style={styles.highlightText}>{certificate.Print_Name}</Text>, daughter/son of <Text style={styles.highlightText}>{certificate.Parents_Name}</Text>,
+            a resident of <Text style={styles.highlightText}>{certificate.Address}</Text>, was a bona fide student at this college.
+            She/He joined the <Text style={styles.highlightText}>{certificate.Course_Name}</Text> course on <Text style={styles.highlightText}>{certificate.Print_Join_Date}</Text> AD
+            and completed it on <Text style={styles.highlightText}>{certificate.Complete_Date}</Text> AD with a Grade Point Average (GPA) of <Text style={styles.highlightText}>{certificate.Grade}</Text>.
             She/He bears a good moral character.
           </Text>
-          
+
           <Text style={styles.wishText}>I wish her/him success in every step of her/his life.</Text>
-          
+
           <View style={styles.detailsContainer}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Certificate No.</Text>
@@ -151,15 +177,15 @@ const CertificateVerification = () => {
               <Text style={styles.detailValue}>{certificate.Issue_Date}</Text>
             </View>
           </View>
-          
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              This certificate is generated by the official site. This does not require verification by 
-              local stamp or signature. You can verify this certificate at: 
+              This certificate is generated by the official site. This does not require verification by
+              local stamp or signature. You can verify this certificate at:
               https://dreamtech.edu.np/verify?roll={certificate.Roll_No}
             </Text>
           </View>
-          
+
           <View style={styles.signatures}>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureLine}></Text>
@@ -170,14 +196,14 @@ const CertificateVerification = () => {
               <Text style={styles.signatureName}>Director</Text>
             </View>
           </View>
-          
+
           <View style={styles.qrContainer}>
-            <Image 
+            <Image
               src={`data:image/svg+xml;utf8,${encodeURIComponent(
                 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-                  ${document.getElementById('cert-qr-pdf').innerHTML}
+                  ${document.getElementById('cert-qr-pdf') ? document.getElementById('cert-qr-pdf').innerHTML : '<rect width="100" height="100" fill="white"/>'}
                 </svg>`
-              )}`} 
+              )}`}
               style={styles.qrCode}
             />
           </View>
@@ -217,33 +243,62 @@ const CertificateVerification = () => {
                       <FaCertificate size={32} />
                     </div>
                     <h2 className="fw-bold text-dark mb-2">Verify Your Certificate</h2>
-                    <p className="text-muted">Enter your Roll Number to verify your certificate</p>
+                    <p className="text-muted">Enter your Roll Number and Date of Birth to verify your certificate</p>
                   </div>
-                  
+
                   <form onSubmit={handleSearch}>
                     <div className="mb-4">
-                      <label className="form-label fw-medium">Roll Number</label>
+                      <label htmlFor="rollNumber" className="form-label fw-medium">Roll Number</label>
                       <div className="input-group">
                         <span className="input-group-text bg-primary text-white">
-                          <FaCertificate />
+                          <FaIdCard />
                         </span>
                         <input
                           type="text"
+                          id="rollNumber"
                           className="form-control form-control-lg"
                           placeholder="Enter your Roll Number (e.g. 5120)"
                           value={rollNumber}
                           onChange={(e) => setRollNumber(e.target.value)}
                           disabled={loading}
+                          aria-describedby="rollNumberHelp"
+                          required
+                        />
+                      </div>
+                      <div id="rollNumberHelp" className="form-text text-muted">
+                        Enter the roll number you were assigned during your course.
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="dateOfBirth" className="form-label fw-medium">Date of Birth</label>
+                      <div className="input-group">
+                        <span className="input-group-text bg-primary text-white">
+                          <FaCalendarAlt />
+                        </span>
+                        <DatePicker
+                          id="dateOfBirth"
+                          selected={dateOfBirth}
+                          onChange={(date) => setDateOfBirth(date)}
+                          dateFormat="yyyy-MM-dd"
+                          placeholderText="Select or type YYYY-MM-DD"
+                          className="form-control form-control-lg datepicker-input" // Add custom class for styling
+                          wrapperClassName="date-picker-wrapper" // Wrapper class for input styling
+                          disabled={loading}
+                          showYearDropdown
+                          scrollableYearDropdown
+                          yearDropdownItemNumber={15}
+                          required
                         />
                       </div>
                       <div className="form-text text-muted">
-                        Enter the roll number you were assigned during your course
+                        Enter your date of birth in YYYY-MM-DD format.
                       </div>
                     </div>
-                    
+
                     <div className="d-grid">
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         className="btn btn-primary btn-lg py-3 fw-bold"
                         disabled={loading}
                       >
@@ -258,7 +313,7 @@ const CertificateVerification = () => {
                   </form>
 
                   {error && (
-                    <div className="alert alert-danger mt-4">
+                    <div className="alert alert-danger mt-4 animate__animated animate__shakeX">
                       {error}
                     </div>
                   )}
@@ -288,14 +343,18 @@ const CertificateVerification = () => {
                             fileName={`${certificate.Print_Name.replace(/\s+/g, '_')}_Certificate.pdf`}
                             className="btn btn-light btn-sm me-2"
                           >
-                            <FaDownload className="me-1" /> Download PDF
+                            {({ loading: pdfLoading }) =>
+                              pdfLoading ? 'Generating...' : <><FaDownload className="me-1" /> Download PDF</>
+                            }
                           </PDFDownloadLink>
                         )}
-                        <button 
+                        <button
                           className="btn btn-outline-light btn-sm"
                           onClick={() => {
                             setCertificate(null);
                             setShowSuccess(false);
+                            setRollNumber(''); // Clear roll number
+                            setDateOfBirth(null); // Clear date of birth
                           }}
                         >
                           New Search
@@ -303,17 +362,17 @@ const CertificateVerification = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="card-body p-0">
                     <div className="row g-0">
                       <div className="col-md-5 bg-light p-4">
                         <h5 className="text-primary mb-4">Certificate Details</h5>
-                        
+
                         {showSuccess && <SuccessAnimation />}
-                        
+
                         <div className="mb-4">
                           <h6 className="text-uppercase text-muted small">Student Information</h6>
-                          <table className="table table-sm">
+                          <table className="table table-sm table-striped">
                             <tbody>
                               <tr>
                                 <th width="40%">Full Name</th>
@@ -341,7 +400,7 @@ const CertificateVerification = () => {
 
                         <div className="mb-4">
                           <h6 className="text-uppercase text-muted small">Course Details</h6>
-                          <table className="table table-sm">
+                          <table className="table table-sm table-striped">
                             <tbody>
                               <tr>
                                 <th width="40%">Course Name</th>
@@ -366,10 +425,10 @@ const CertificateVerification = () => {
                             </tbody>
                           </table>
                         </div>
-                        
+
                         <div className="mb-4">
                           <h6 className="text-uppercase text-muted small">Course Timeline</h6>
-                          <table className="table table-sm">
+                          <table className="table table-sm table-striped">
                             <tbody>
                               <tr>
                                 <th width="40%">Joined Date</th>
@@ -386,10 +445,10 @@ const CertificateVerification = () => {
                             </tbody>
                           </table>
                         </div>
-                        
+
                         <div className="text-center mt-4">
                           <div className="p-3 bg-white rounded-3 border d-inline-block shadow-sm">
-                            <QRCodeCanvas 
+                            <QRCodeCanvas
                               id="cert-qr"
                               value={`https://dreamtech.edu.np/verify?roll=${certificate.Roll_No}`}
                               size={128}
@@ -400,39 +459,39 @@ const CertificateVerification = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="col-md-7 bg-white p-4">
                         <div className="certificate-preview position-relative rounded-3 overflow-hidden shadow-sm">
-                          <img 
-                            src={certificateBg} 
-                            alt="Certificate background" 
+                          <img
+                            src={certificateBg}
+                            alt="Certificate background"
                             className="position-absolute w-100 h-100 top-0 start-0 object-cover opacity-10"
                           />
-                          
+
                           <div className="position-relative p-4 p-md-5">
                             <div className="text-center mb-4">
                               <h2 className="text-primary fw-bold mb-0">Dream Technical College</h2>
                               <h3 className="text-dark fw-bold">Certificate of Completion</h3>
                             </div>
-                            
+
                             <div className="certificate-body mb-4">
                               <p className="text-center mb-0">
-                                This is to certify that <span className="fw-bold">{certificate.Print_Name}</span>, 
-                                daughter/son of <span className="fw-bold">{certificate.Parents_Name}</span>, 
-                                a resident of <span className="fw-bold">{certificate.Address}</span>, 
+                                This is to certify that <span className="fw-bold">{certificate.Print_Name}</span>,
+                                daughter/son of <span className="fw-bold">{certificate.Parents_Name}</span>,
+                                a resident of <span className="fw-bold">{certificate.Address}</span>,
                                 was a bona fide student at this college.
                               </p>
                               <p className="text-center">
-                                She/He joined the <span className="fw-bold">{certificate.Course_Name}</span> course on 
-                                <span className="fw-bold"> {certificate.Print_Join_Date} AD</span> and completed it on 
-                                <span className="fw-bold"> {certificate.Complete_Date} AD</span> with a Grade Point Average (GPA) of 
+                                She/He joined the <span className="fw-bold">{certificate.Course_Name}</span> course on
+                                <span className="fw-bold"> {certificate.Print_Join_Date} AD</span> and completed it on
+                                <span className="fw-bold"> {certificate.Complete_Date} AD</span> with a Grade Point Average (GPA) of
                                 <span className="fw-bold"> {certificate.Grade}</span>. She/He bears a good moral character.
                               </p>
                               <p className="text-center fst-italic">
                                 I wish her/him success in every step of her/his life.
                               </p>
                             </div>
-                            
+
                             <div className="row mt-4">
                               <div className="col-md-6">
                                 <div className="d-flex mb-2">
@@ -459,10 +518,10 @@ const CertificateVerification = () => {
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div className="text-center mt-5">
                               <div className="d-inline-block p-2 bg-white border rounded">
-                                <QRCodeCanvas 
+                                <QRCodeCanvas
                                   id="cert-qr-pdf"
                                   value={`https://dreamtech.edu.np/verify?roll=${certificate.Roll_No}`}
                                   size={80}
@@ -472,7 +531,7 @@ const CertificateVerification = () => {
                                 <p className="mb-0 small text-muted">Scan to verify</p>
                               </div>
                             </div>
-                            
+
                             <div className="row mt-5 pt-4">
                               <div className="col-md-6 text-center">
                                 <div className="signature-line mb-1 mx-auto"></div>
@@ -483,11 +542,11 @@ const CertificateVerification = () => {
                                 <p className="mb-0 fw-bold">Director</p>
                               </div>
                             </div>
-                            
+
                             <div className="text-center mt-5 pt-3 border-top">
                               <p className="small text-muted mb-0">
-                                This certificate is generated by the official site. This does not require 
-                                verification by local stamp or signature. You can verify this certificate 
+                                This certificate is generated by the official site. This does not require
+                                verification by local stamp or signature. You can verify this certificate
                                 at: https://dreamtech.edu.np/verify?roll={certificate.Roll_No}
                               </p>
                             </div>
@@ -502,7 +561,7 @@ const CertificateVerification = () => {
           </div>
         </section>
       )}
-      
+
       {/* Database Status */}
       <div className="container py-4">
         <div className="text-center">
@@ -525,6 +584,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     position: 'relative',
+    fontFamily: 'Helvetica', // Ensure a standard font is used for PDF
   },
   backgroundImage: {
     position: 'absolute',
@@ -533,53 +593,70 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
     opacity: 0.1,
+    // Adjust object-fit if image doesn't scale well
   },
   content: {
     padding: 40,
     zIndex: 1,
   },
   header: {
-    fontSize: 24,
+    fontSize: 28, // Increased font size
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
-    color: '#0d6efd'
+    color: '#0d6efd',
+    textTransform: 'uppercase', // Added for emphasis
   },
   title: {
-    fontSize: 20,
+    fontSize: 24, // Increased font size
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 30,
-    color: '#212529'
+    color: '#343a40', // Darker color
+    textDecoration: 'underline', // Added underline
   },
   bodyText: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: 'justify', // Justified text for better readability
     marginBottom: 15,
-    lineHeight: 1.5,
+    lineHeight: 1.8, // Increased line height
+    paddingHorizontal: 20, // Added horizontal padding
+  },
+  highlightText: {
+    fontWeight: 'bold', // Highlight names and dates
+    color: '#0d6efd', // Primary color for highlights
   },
   wishText: {
     fontSize: 12,
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 30,
+    color: '#6c757d', // Muted color
   },
   detailsContainer: {
     marginTop: 20,
     marginBottom: 20,
     paddingHorizontal: 50,
+    border: '1px solid #e9ecef', // Added subtle border
+    borderRadius: 8,
+    paddingVertical: 15,
+    backgroundColor: '#f8f9fa',
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
+    borderBottom: '0.5px dotted #ced4da', // Dotted separator
+    paddingBottom: 5,
   },
   detailLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
+    color: '#495057',
   },
   detailValue: {
-    fontSize: 12,
+    fontSize: 11,
+    color: '#212529',
   },
   footer: {
     marginTop: 20,
@@ -601,23 +678,28 @@ const styles = StyleSheet.create({
   },
   signatureBox: {
     alignItems: 'center',
+    width: '40%', // Allocate width for signature blocks
   },
   signatureLine: {
-    width: 150,
+    width: '80%', // Line takes 80% of box width
     borderBottom: '1px solid #000',
     marginBottom: 5,
   },
   signatureName: {
     fontSize: 12,
     fontWeight: 'bold',
+    color: '#212529',
+    marginTop: 5,
   },
   qrContainer: {
     alignItems: 'center',
     marginTop: 20,
   },
-  qrCodeCanvas: {
+  qrCode: { // Renamed from qrCodeCanvas for consistency with Image component
     width: 80,
     height: 80,
+    border: '2px solid #adb5bd', // Added border to QR code
+    padding: 2,
   },
 });
 

@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { 
-  FiCalendar, FiUser, FiTag, FiSearch, 
-  FiBookOpen, FiArrowRight, FiClock 
+  FiCalendar, FiSearch, FiBookOpen,  
 } from 'react-icons/fi';
-import { FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp } from 'react-icons/fa';
 import BlogCard from '../components/BlogCard';
-import blogHero from '../assets/images/about-hero-bg.jpg';
-import '../assets/styles/Blogs.css';
+// import blogHero from '../assets/images/about-hero-bg.jpg';
+import '../assets/styles/Blog.css';
 
-const Blogs = () => {
+const Blog = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [blogs, setBlogs] = useState([]);
@@ -291,8 +289,8 @@ const Blogs = () => {
                     <div className="list-group list-group-flush">
                       {blogs.slice(0, 3).map(blog => (
                         <a 
-                          key={`recent-${blog.id}`}
-                          href={`/blog/${blog.id}`}
+                          key={`recent-${blog.title}`}
+                          href={`/blog/${blog.title}`}
                           className="list-group-item list-group-item-action border-0 px-0 py-3"
                         >
                           <div className="d-flex align-items-center">
@@ -340,4 +338,4 @@ const Blogs = () => {
   );
 };
 
-export default Blogs;
+export default Blog;
