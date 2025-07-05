@@ -1,0 +1,111 @@
+/* src/assets/styles/About.css */
+/* Hero Section */
+.about-hero {
+  position: relative;
+  background: linear-gradient(rgba(0, 0, 0, 0.7), url('../images/about-hero-bg.jpg') no-repeat center center);
+  background-size: cover;
+  color: white;
+  overflow: hidden;
+}
+
+.about-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(10, 45, 120, 0.9) 0%, rgba(13, 110, 253, 0.95) 100%);
+  z-index: 0;
+}
+
+.about-hero .container {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-image-container {
+  position: relative;
+}
+
+.floating-badge {
+  position: absolute;
+  bottom: -20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+/* Tab Navigation */
+.nav-tabs .nav-link {
+  padding: 1.2rem;
+  font-weight: 500;
+  color: #495057;
+  border: none;
+  position: relative;
+  font-size: 1.1rem;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  background-color: transparent;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background-color: #0d6efd;
+}
+
+/* Icons */
+.icon-lg {
+  width: 60px;
+  height: 60px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* Color Variants */
+.bg-primary-light { background-color: rgba(13, 110, 253, 0.05) !important; }
+.bg-success-light { background-color: rgba(25, 135, 84, 0.05) !important; }
+.bg-warning-light { background-color: rgba(255, 193, 7, 0.05) !important; }
+.bg-info-light { background-color: rgba(13, 202, 240, 0.05) !important; }
+.bg-danger-light { background-color: rgba(220, 53, 69, 0.05) !important; }
+.bg-secondary-light { background-color: rgba(108, 117, 125, 0.05) !important; }
+
+/* Team Cards */
+.team-member .card-img-top {
+  height: 220px;
+  object-fit: cover;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .about-hero {
+    text-align: center;
+    padding: 80px 0;
+  }
+  
+  .floating-badge {
+    right: 50%;
+    transform: translateX(50%);
+  }
+  
+  .nav-tabs .nav-link {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+}

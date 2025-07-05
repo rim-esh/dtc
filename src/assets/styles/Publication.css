@@ -1,0 +1,189 @@
+/* Hero Section */
+.publication-hero {
+  position: relative;
+  background: linear-gradient(rgba(0, 0, 0, 0.7), url('../images/about-hero-bg.jpg') no-repeat center center);
+  background-size: cover;
+  color: white;
+  overflow: hidden;
+  padding: 100px 0;
+}
+
+.publication-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(10, 45, 120, 0.9) 0%, rgba(13, 110, 253, 0.95) 100%);
+  z-index: 0;
+}
+
+.publication-hero .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Publication Graphic */
+.publication-hero-graphic {
+  position: relative;
+  height: 300px;
+}
+
+.floating-book {
+  position: absolute;
+  width: 120px;
+  height: 160px;
+  perspective: 1000px;
+}
+
+.book-cover {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px 8px 8px 4px;
+  transform: rotateY(0deg);
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 0.5s ease;
+}
+
+.book-pages {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  right: 5px;
+  bottom: 5px;
+  background: #f8f9fa;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.book-1 {
+  top: 20px;
+  left: 0;
+  animation: float-book-1 6s ease-in-out infinite;
+}
+
+.book-2 {
+  top: 0;
+  left: 120px;
+  animation: float-book-2 7s ease-in-out infinite;
+}
+
+.book-3 {
+  top: 60px;
+  left: 240px;
+  animation: float-book-3 5s ease-in-out infinite;
+}
+
+@keyframes float-book-1 {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes float-book-2 {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  50% { transform: translateY(-25px) rotate(-3deg); }
+}
+
+@keyframes float-book-3 {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+}
+
+/* Publication Card */
+.publication-card {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.publication-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.publication-cover {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.cover-bg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.cover-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.cover-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Icons */
+.icon-xl {
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .publication-hero {
+    padding: 80px 0;
+  }
+  
+  .publication-hero-graphic {
+    height: 200px;
+  }
+  
+  .floating-book {
+    width: 80px;
+    height: 110px;
+  }
+  
+  .book-2 {
+    left: 80px;
+  }
+  
+  .book-3 {
+    left: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .publication-hero {
+    text-align: center;
+  }
+  
+  .publication-hero-graphic {
+    display: none;
+  }
+  
+  .icon-xl {
+    width: 70px;
+    height: 70px;
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .publication-cover {
+    height: 160px;
+  }
+}
