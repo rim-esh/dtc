@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/dtc/static/css/main.4b8be349.css",
+    "main.js": "/dtc/static/js/main.9f6f1f25.js",
+    "static/media/fa-solid-900.ttf": "/dtc/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
+    "static/media/fa-brands-400.ttf": "/dtc/static/media/fa-brands-400.1815e00441357e01619e.ttf",
+    "static/media/fa-solid-900.woff2": "/dtc/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
+    "static/media/certificate_bg.jpg": "/dtc/static/media/certificate_bg.9a6349c423780ad8f557.jpg",
+    "static/media/fa-brands-400.woff2": "/dtc/static/media/fa-brands-400.c210719e60948b211a12.woff2",
+    "static/media/fa-regular-400.ttf": "/dtc/static/media/fa-regular-400.914997e1bdfc990d0897.ttf",
+    "static/media/fa-regular-400.woff2": "/dtc/static/media/fa-regular-400.89999bdf5d835c012025.woff2",
+    "static/media/author-placeholder.png": "/dtc/static/media/author-placeholder.b0bae2e8a80404c1a6e6.png",
+    "static/media/about-hero-bg.jpg": "/dtc/static/media/about-hero-bg.fefa856abbbd9be8f424.jpg",
+    "static/media/fa-v4compatibility.ttf": "/dtc/static/media/fa-v4compatibility.da94ef451f4969af06e6.ttf",
+    "index.html": "/dtc/index.html",
+    "static/media/fa-v4compatibility.woff2": "/dtc/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
+    "main.4b8be349.css.map": "/dtc/static/css/main.4b8be349.css.map",
+    "main.9f6f1f25.js.map": "/dtc/static/js/main.9f6f1f25.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.4b8be349.css",
+    "static/js/main.9f6f1f25.js"
+  ]
+}
