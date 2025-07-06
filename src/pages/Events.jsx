@@ -2,13 +2,68 @@
 import React, { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaSearch, FaFilter } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import Papa from 'papaparse';
+
+// Helper function to parse dates robustly
+const parseDate = (dateString) => {
+  if (!dateString) {
+    // console.log(`[parseDate] Input: "${dateString}" -> Output: null (empty)`);
+    return null;
+  }
+
+  let parsedDate = null;
+
+  // Try parsing "DD/MM/YYYY", "DD-MM-YYYY", or "DD.MM.YYYY"
+  const dmyMatch = dateString.match(/^(\d{1,2})[/\-.]([a-zA-Z]{3}|\d{1,2})[/\-.](20\d{2}|\d{2})$/);
+  if (dmyMatch) {
+    let [, day, month, year] = dmyMatch;
+
+    // Handle 2-digit year (e.g., "25" for 2025)
+    if (year.length === 2) {
+      year = `20${year}`;
+    }
+
+    // Month mapping for abbreviations (e.g., "Jan", "Jul")
+    const monthMap = {
+      'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+      'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+    };
+
+    let monthIndex;
+    if (isNaN(month)) { // Month is an abbreviation (e.g., "Jan")
+      monthIndex = monthMap[month.toLowerCase()];
+    } else { // Month is a number (e.g., "01" or "7")
+      monthIndex = parseInt(month, 10) - 1; // Correct: Month is 0-indexed in Date constructor
+    }
+
+    if (monthIndex !== undefined && !isNaN(parseInt(day, 10)) && !isNaN(parseInt(year, 10))) {
+      parsedDate = new Date(parseInt(year, 10), monthIndex, parseInt(day, 10));
+    }
+  }
+
+  // If not parsed by DD/MM/YYYY or DD/MMM/YYYY, try standard JS Date constructor (e.g., for YYYY-MM-DD, MM/DD/YYYY)
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    parsedDate = new Date(dateString);
+  }
+
+  // Double-check validity after all attempts
+  const isValidDate = !isNaN(parsedDate.getTime());
+  // console.log(`[parseDate] Input: "${dateString}" -> Output: ${isValidDate ? parsedDate.toLocaleDateString() : 'Invalid Date'}`);
+
+  return isValidDate ? parsedDate : null;
+};
+
 
 const Events = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Event categories
+  const [eventsData, setEventsData] = useState([]);
+  const [error, setError] = useState('');
+
+  // IMPORTANT: Ensure this URL is correct and publicly accessible CSV
+  const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSltHS6faugPdqcvFmSNaNPDQ92TiHd-iG5A_QwZCO5P0RsZskeiHl5LUFsXQ2lYdziFefcS_5ADexT/pub?output=csv";
+
   const categories = [
     { id: 'all', name: 'All Events' },
     { id: 'workshop', name: 'Workshops' },
@@ -18,147 +73,183 @@ const Events = () => {
     { id: 'sports', name: 'Sports Events' },
   ];
 
-  // Mock events data
-  const eventsData = [
-    {
-      id: 1,
-      title: "Tech Innovation Summit",
-      date: "2023-10-15",
-      time: "10:00 AM - 4:00 PM",
-      location: "College Auditorium",
-      description: "Join industry leaders as they discuss the latest trends in technology and innovation.",
-      category: "conference",
-      featured: true,
-      seats: 120,
-      registered: 98,
-      image: "tech-summit"
-    },
-    {
-      id: 2,
-      title: "Web Development Workshop",
-      date: "2023-10-20",
-      time: "2:00 PM - 5:00 PM",
-      location: "Computer Lab 3",
-      description: "Hands-on workshop covering modern web development techniques and frameworks.",
-      category: "workshop",
-      featured: false,
-      seats: 30,
-      registered: 28,
-      image: "web-dev"
-    },
-    {
-      id: 3,
-      title: "Annual Cultural Festival",
-      date: "2023-11-05",
-      time: "9:00 AM - 9:00 PM",
-      location: "College Grounds",
-      description: "Celebrate our diverse cultural heritage with music, dance, food, and art exhibitions.",
-      category: "cultural",
-      featured: true,
-      seats: 500,
-      registered: 423,
-      image: "cultural-fest"
-    },
-    {
-      id: 4,
-      title: "Data Science Seminar",
-      date: "2023-10-25",
-      time: "11:00 AM - 1:00 PM",
-      location: "Lecture Hall B",
-      description: "Exploring the future of data science and its applications in various industries.",
-      category: "seminar",
-      featured: false,
-      seats: 80,
-      registered: 72,
-      image: "data-science"
-    },
-    {
-      id: 5,
-      title: "Inter-College Basketball Tournament",
-      date: "2023-11-10",
-      time: "9:00 AM - 6:00 PM",
-      location: "Sports Complex",
-      description: "Watch our college team compete against other institutions in this exciting tournament.",
-      category: "sports",
-      featured: false,
-      seats: 200,
-      registered: 187,
-      image: "basketball"
-    },
-    {
-      id: 6,
-      title: "AI & Machine Learning Workshop",
-      date: "2023-11-15",
-      time: "1:30 PM - 4:30 PM",
-      location: "Tech Innovation Center",
-      description: "Practical session on building and deploying machine learning models.",
-      category: "workshop",
-      featured: true,
-      seats: 40,
-      registered: 36,
-      image: "ai-workshop"
-    },
-    {
-      id: 7,
-      title: "Career Development Conference",
-      date: "2023-11-20",
-      time: "9:30 AM - 3:30 PM",
-      location: "Main Conference Hall",
-      description: "Connect with industry professionals and learn about career opportunities.",
-      category: "conference",
-      featured: false,
-      seats: 150,
-      registered: 132,
-      image: "career"
-    },
-    {
-      id: 8,
-      title: "Robotics Competition",
-      date: "2023-12-01",
-      time: "10:00 AM - 5:00 PM",
-      location: "Engineering Building",
-      description: "Student teams compete to build and program the most innovative robots.",
-      category: "workshop",
-      featured: true,
-      seats: 100,
-      registered: 94,
-      image: "robotics"
-    }
-  ];
-
-  // Simulate loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      setError('');
 
-  // Filter events based on category and search term
-  const filteredEvents = eventsData.filter(event => {
+      try {
+        const response = await fetch(GOOGLE_SHEET_CSV_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const csvText = await response.text();
+
+        Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const parsedEvents = results.data
+              .map((event, index) => ({
+                id: event.ID || `event-${index}-${Date.now()}`,
+                title: event.Title || 'No Title',
+                date: event.Date || '', // Keep as string for parsing later
+                time: event.Time || 'No Time',
+                location: event.Location || 'No Location',
+                description: event.Description || 'No Description',
+                category: event.Category ? event.Category.toLowerCase().trim() : 'uncategorized',
+                featured: event.Featured && (event.Featured.toLowerCase().trim() === 'yes'),
+                seats: parseInt(event.Seats) || 0,
+                registered: parseInt(event.Registered) || 0,
+                image: event.Image || 'default',
+              }))
+              .filter(event => event.title && event.date); // Filter out events with no title or date
+
+            setEventsData(parsedEvents);
+            console.log("Fetched and Parsed Event Data (raw):", parsedEvents); // Check initial data
+            setIsLoading(false);
+          },
+          error: (parseError) => {
+            console.error('Error parsing CSV:', parseError);
+            setError('Failed to parse event data. Please check the sheet format.');
+            setEventsData([]);
+            setIsLoading(false);
+          }
+        });
+
+      } catch (err) {
+        console.error("Failed to fetch events:", err);
+        setError('Failed to load event data. Please try again later.');
+        setEventsData([]);
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [GOOGLE_SHEET_CSV_URL]);
+
+  // Helper function to determine if an event is upcoming or past
+  const getEventStatus = (eventDateString) => {
+    const eventDate = parseDate(eventDateString);
+    if (!eventDate) {
+        // console.log(`[getEventStatus] Cannot parse date "${eventDateString}". Returning 'unknown'.`);
+        return 'unknown';
+    }
+
+    const now = new Date();
+    // Normalize both dates to start of day for accurate comparison
+    now.setHours(0, 0, 0, 0);
+    eventDate.setHours(0, 0, 0, 0);
+
+    // console.log(`[getEventStatus] Event Date: ${eventDate.toLocaleDateString()}, Current Date: ${now.toLocaleDateString()}`);
+
+    if (eventDate.getTime() >= now.getTime()) {
+      // console.log(`[getEventStatus] "${eventDateString}" is UPCOMING`);
+      return 'upcoming';
+    } else {
+      // console.log(`[getEventStatus] "${eventDateString}" is PAST`);
+      return 'past';
+    }
+  };
+
+  const allFilteredEvents = eventsData.filter(event => {
     const matchesCategory = activeCategory === 'all' || event.category === activeCategory;
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          event.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          event.location.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  // Get featured events
-  const featuredEvents = eventsData.filter(event => event.featured);
+  // Filter based on the correctly parsed and compared dates
+  const upcomingEvents = allFilteredEvents.filter(event => getEventStatus(event.date) === 'upcoming');
+  const pastEvents = allFilteredEvents.filter(event => getEventStatus(event.date) === 'past');
+  const featuredEvents = upcomingEvents.filter(event => event.featured);
 
-  // Event card variants for animation
+
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.4 }
     }
   };
 
+  const renderEventCards = (events, title, noEventsMessage) => (
+    <section className="py-5">
+      <div className="container py-4">
+        <div className="text-center mb-5">
+          <h2 className="fw-bold text-primary mb-3">{title}</h2>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Loading events...</p>
+          </div>
+        ) : error ? (
+          <div className="col-12 text-center py-5">
+            <div className="alert alert-danger">
+              {error}
+            </div>
+          </div>
+        ) : events.length > 0 ? (
+          <div className="row g-4">
+            {events.map((event, index) => (
+              <div className="col-md-6 col-lg-4" key={event.id}>
+                <motion.div
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ delay: index * 0.1 }}
+                  className="card h-100 border-0 shadow-sm event-card-horizontal"
+                >
+                  <div className="row g-0">
+                    <div className="col-md-5">
+                      <div className={`event-image event-${event.image}`}></div>
+                    </div>
+                    <div className="col-md-7">
+                      <div className="card-body p-3">
+                        <div className="d-flex align-items-center mb-2">
+                          <span className="badge bg-primary me-2">{event.category.charAt(0).toUpperCase() + event.category.slice(1)}</span>
+                          <span className="text-muted small">
+                            <FaCalendarAlt className="me-1" /> {event.date}
+                          </span>
+                        </div>
+                        <h3 className="h6 fw-bold mb-1">{event.title}</h3>
+                        <p className="text-muted small mb-2">{event.description.substring(0, 80)}...</p>
+                        <div className="d-flex align-items-center text-muted small mb-2">
+                          <FaMapMarkerAlt className="me-2" /> {event.location}
+                        </div>
+                        <div className="d-flex align-items-center text-muted small mb-3">
+                          <FaClock className="me-2" /> {event.time}
+                        </div>
+                        <button className="btn btn-sm btn-outline-primary w-100">
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="col-12 text-center py-5">
+            <div className="alert alert-info">
+              {noEventsMessage}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+
   return (
     <div className="events-page">
-      {/* Hero Section */}
       <section className="events-hero bg-primary text-white py-5 position-relative overflow-hidden">
         <div className="container py-4">
           <div className="row align-items-center">
@@ -170,7 +261,7 @@ const Events = () => {
               >
                 <h1 className="display-4 fw-bold mb-3">College Events & Activities</h1>
                 <p className="lead mb-4">
-                  Join our vibrant campus community through workshops, seminars, cultural events, 
+                  Join our vibrant campus community through workshops, seminars, cultural events,
                   and sports activities designed to enrich your college experience.
                 </p>
                 <div className="d-flex gap-2">
@@ -207,59 +298,80 @@ const Events = () => {
             <h2 className="fw-bold text-primary mb-3">Featured Events</h2>
             <p className="text-muted">Highlighted activities you won't want to miss</p>
           </div>
-          
+
           <div className="row g-4">
-            {featuredEvents.slice(0, 3).map((event, index) => (
-              <div className="col-md-4" key={event.id}>
-                <motion.div
-                  variants={cardVariants}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ delay: index * 0.1 }}
-                  className="card h-100 border-0 shadow overflow-hidden event-card"
-                >
-                  <div className={`card-img-top event-image event-${event.image}`}></div>
-                  <div className="card-body p-4">
-                    <div className="d-flex align-items-center mb-3">
-                      <span className="badge bg-primary me-2">{event.category.charAt(0).toUpperCase() + event.category.slice(1)}</span>
-                      <span className="text-muted small">
-                        <FaCalendarAlt className="me-1" /> {event.date}
-                      </span>
-                    </div>
-                    <h3 className="h5 fw-bold mb-2">{event.title}</h3>
-                    <p className="text-muted mb-3">{event.description}</p>
-                    <div className="d-flex align-items-center justify-content-between">
-                      <div>
-                        <span className="d-flex align-items-center text-muted small mb-1">
-                          <FaMapMarkerAlt className="me-2" /> {event.location}
-                        </span>
-                        <span className="d-flex align-items-center text-muted small">
-                          <FaClock className="me-2" /> {event.time}
+            {isLoading ? (
+              <div className="col-12 text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-3">Loading featured events...</p>
+              </div>
+            ) : error ? (
+              <div className="col-12 text-center py-5">
+                <div className="alert alert-danger">
+                  {error}
+                </div>
+              </div>
+            ) : featuredEvents.length > 0 ? (
+              featuredEvents.slice(0, 3).map((event, index) => (
+                <div className="col-md-4" key={event.id}>
+                  <motion.div
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                    className="card h-100 border-0 shadow overflow-hidden event-card"
+                  >
+                    <div className={`card-img-top event-image event-${event.image}`}></div>
+                    <div className="card-body p-4">
+                      <div className="d-flex align-items-center mb-3">
+                        <span className="badge bg-primary me-2">{event.category.charAt(0).toUpperCase() + event.category.slice(1)}</span>
+                        <span className="text-muted small">
+                          <FaCalendarAlt className="me-1" /> {event.date}
                         </span>
                       </div>
-                      <div className="progress-circle">
-                        <div className="progress" style={{ '--progress': `${(event.registered / event.seats) * 100}%` }}>
-                          <span>{Math.round((event.registered / event.seats) * 100)}%</span>
+                      <h3 className="h5 fw-bold mb-2">{event.title}</h3>
+                      <p className="text-muted mb-3">{event.description}</p>
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div>
+                          <span className="d-flex align-items-center text-muted small mb-1">
+                            <FaMapMarkerAlt className="me-2" /> {event.location}
+                          </span>
+                          <span className="d-flex align-items-center text-muted small">
+                            <FaClock className="me-2" /> {event.time}
+                          </span>
+                        </div>
+                        <div className="progress-circle">
+                          <div className="progress" style={{ '--progress': `${event.seats > 0 ? (event.registered / event.seats) * 100 : 0}%` }}>
+                            <span>{event.seats > 0 ? Math.round((event.registered / event.seats) * 100) : 0}%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="card-footer bg-white border-0 pt-0 pb-4 px-4">
-                    <button className="btn btn-outline-primary w-100">Register Now</button>
-                  </div>
-                </motion.div>
+                    <div className="card-footer bg-white border-0 pt-0 pb-4 px-4">
+                      <button className="btn btn-outline-primary w-100">Register Now</button>
+                    </div>
+                  </motion.div>
+                </div>
+              ))
+            ) : (
+              <div className="col-12 text-center py-5">
+                <div className="alert alert-info">
+                  No featured events found.
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
 
-      {/* Events Filter */}
+      {/* Events Filter and Search */}
       <section className="py-5">
         <div className="container py-4">
           <div className="row align-items-center mb-4">
             <div className="col-md-6 mb-3 mb-md-0">
-              <h2 className="fw-bold mb-0">Upcoming Events</h2>
+              <h2 className="fw-bold mb-0">Explore All Events</h2>
             </div>
             <div className="col-md-6">
               <div className="input-group">
@@ -279,7 +391,7 @@ const Events = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Category Filter */}
           <div className="mb-4">
             <div className="d-flex flex-wrap gap-2">
@@ -294,67 +406,17 @@ const Events = () => {
               ))}
             </div>
           </div>
-          
-          {/* Events List */}
-          {isLoading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="mt-3">Loading events...</p>
-            </div>
-          ) : (
-            <div className="row g-4">
-              {filteredEvents.length > 0 ? (
-                filteredEvents.map((event, index) => (
-                  <div className="col-md-6 col-lg-4" key={event.id}>
-                    <motion.div
-                      variants={cardVariants}
-                      initial="hidden"
-                      animate="visible"
-                      transition={{ delay: index * 0.1 }}
-                      className="card h-100 border-0 shadow-sm event-card-horizontal"
-                    >
-                      <div className="row g-0">
-                        <div className="col-md-5">
-                          <div className={`event-image event-${event.image}`}></div>
-                        </div>
-                        <div className="col-md-7">
-                          <div className="card-body p-3">
-                            <div className="d-flex align-items-center mb-2">
-                              <span className="badge bg-primary me-2">{event.category.charAt(0).toUpperCase() + event.category.slice(1)}</span>
-                              <span className="text-muted small">
-                                <FaCalendarAlt className="me-1" /> {event.date}
-                              </span>
-                            </div>
-                            <h3 className="h6 fw-bold mb-1">{event.title}</h3>
-                            <p className="text-muted small mb-2">{event.description.substring(0, 80)}...</p>
-                            <div className="d-flex align-items-center text-muted small mb-2">
-                              <FaMapMarkerAlt className="me-2" /> {event.location}
-                            </div>
-                            <div className="d-flex align-items-center text-muted small mb-3">
-                              <FaClock className="me-2" /> {event.time}
-                            </div>
-                            <button className="btn btn-sm btn-outline-primary w-100">
-                              View Details
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-12 text-center py-5">
-                  <div className="alert alert-info">
-                    No events found matching your criteria. Please try different filters.
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </section>
+
+      {/* Upcoming Events List */}
+      {renderEventCards(upcomingEvents, "Upcoming Events", "No upcoming events found matching your criteria.")}
+
+      <hr className="my-5 mx-auto w-75" /> {/* Separator */}
+
+      {/* Past Events List */}
+      {renderEventCards(pastEvents, "Past Events", "No past events found matching your criteria.")}
+
 
       {/* CTA Section */}
       <section className="py-5 bg-primary text-white">
@@ -363,7 +425,7 @@ const Events = () => {
             <div className="col-lg-8 mb-4 mb-lg-0">
               <h2 className="fw-bold mb-3">Host Your Event With Us</h2>
               <p className="mb-0">
-                Dream Technical College offers state-of-the-art facilities for workshops, 
+                Dream Technical College offers state-of-the-art facilities for workshops,
                 seminars, conferences, and cultural events.
               </p>
             </div>

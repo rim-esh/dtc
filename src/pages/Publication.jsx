@@ -5,7 +5,7 @@ import {
   FiBook, FiFileText, FiDownload, FiSearch, 
   FiCalendar, FiUser, FiBookOpen, FiFilter 
 } from 'react-icons/fi';
-import publicationHero from '../assets/images/about-hero-bg.jpg';
+// import publicationHero from '../assets/images/about-hero-bg.jpg';
 import '../assets/styles/Publication.css';
 
 const Publication = () => {

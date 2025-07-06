@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { FiCheckCircle, FiDownload, FiArrowRight, FiPhone, FiMapPin } from "react-icons/fi";
-import { FaGraduationCap, FaChalkboardTeacher, FaLaptopCode } from "react-icons/fa";
+import { FiCheckCircle, FiDownload, FiArrowRight, FiPhone, FiMapPin, FiMail } from "react-icons/fi"; // FiExclamationCircle removed from here
+import { FaGraduationCap, FaChalkboardTeacher, FaLaptopCode, FaSpinner, FaExclamationCircle } from "react-icons/fa"; // FaExclamationCircle added here
 import admissionHero from "../assets/images/about-hero-bg.jpg";
 import campusImg from "../assets/images/about-hero-bg.jpg";
 import "../assets/styles/Admission.css";
+
+// IMPORTANT: Replace 'YOUR_FORMSPREE_FORM_ID' with the actual ID from Formspree.io
+const FORM_ID = 'mdkzvlqn'; 
+const FORMSPREE_ENDPOINT = `https://formspree.io/f/${FORM_ID}`;
 
 const Admission = () => {
   const [formData, setFormData] = useState({
@@ -15,10 +19,13 @@ const Admission = () => {
     course: "",
     message: ""
   });
-  const [submitted, setSubmitted] = useState(false);
+  
+  const [loading, setLoading] = useState(false); // New state for loading
+  const [statusMessage, setStatusMessage] = useState(''); // New state for success/error message
+  const [isSuccess, setIsSuccess] = useState(false); // New state to determine message type
 
   useEffect(() => {
-    AOS.init({ 
+    AOS.init({
       duration: 800,
       once: true
     });
@@ -32,12 +39,60 @@ const Admission = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
+    setLoading(true); // Start loading
+    setStatusMessage(''); // Clear previous messages
+    setIsSuccess(false); // Reset success status
+
+    try {
+      // Add a timestamp and set the email subject for Formspree
+      const submissionTimestamp = new Date().toLocaleString('en-GB', {
+        year: 'numeric', month: 'short', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: true,
+        timeZoneName: 'short'
+      });
+
+      const dataToSend = {
+        ...formData,
+        _subject: `New Admission Inquiry from ${formData.name || 'Unnamed Applicant'}`, // Subject for the email
+        timestamp: submissionTimestamp // Include timestamp in the email body
+      };
+
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(dataToSend)
+      });
+
+      if (response.ok) {
+        setStatusMessage('Your application has been submitted successfully! We will contact you soon.');
+        setIsSuccess(true);
+        // Optionally clear the form fields after successful submission
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          course: "",
+          message: ""
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Formspree submission error:', errorData);
+        setStatusMessage(`Failed to submit application. Error: ${errorData.errors ? errorData.errors.map(err => err.message).join(', ') : 'Unknown error.'} Please try again.`);
+        setIsSuccess(false);
+      }
+    } catch (error) {
+      console.error('Network or unexpected error:', error);
+      setStatusMessage('There was a problem submitting your application. Please check your internet connection and try again.');
+      setIsSuccess(false);
+    } finally {
+      setLoading(false); // End loading
+    }
   };
 
   const courses = [
@@ -60,20 +115,20 @@ const Admission = () => {
                 Admissions <span className="text-warning">Open</span> 2082
               </h1>
               <p className="lead text-light mb-4">
-                Begin your journey to success with Nepal's premier technical education provider. 
+                Begin your journey to success with Nepal's premier technical education provider.
                 Limited seats available across all programs.
               </p>
               <div className="d-flex flex-wrap gap-3">
-                <a 
-                  href="#application-process" 
+                <a
+                  href="#application-process"
                   className="btn btn-primary btn-lg px-4 py-3 d-flex align-items-center"
                   data-aos="zoom-in"
                   data-aos-delay="200"
                 >
                   Apply Now <FiArrowRight className="ms-2" />
                 </a>
-                <a 
-                  href="/brochure.pdf" 
+                <a
+                  href="/brochure.pdf"
                   className="btn btn-outline-light btn-lg px-4 py-3 d-flex align-items-center"
                   data-aos="zoom-in"
                   data-aos-delay="300"
@@ -84,10 +139,10 @@ const Admission = () => {
             </div>
             <div className="col-lg-6" data-aos="fade-left">
               <div className="hero-image-container">
-                <img 
-                  src={admissionHero} 
-                  alt="Students at Dream Technical College" 
-                  className="img-fluid rounded-4 shadow-lg" 
+                <img
+                  src={admissionHero}
+                  alt="Students at Dream Technical College"
+                  className="img-fluid rounded-4 shadow-lg"
                 />
                 <div className="floating-badge bg-warning text-dark">
                   <FiCheckCircle className="me-2" /> 100% Practical Learning
@@ -193,6 +248,7 @@ const Admission = () => {
                     </ul>
                   </div>
                   <div className="card-footer bg-transparent border-0 pt-0 pb-4 px-4">
+                    {/* Updated to link to the form directly */}
                     <a href="#apply-now" className="btn btn-sm btn-outline-primary">
                       Apply Now
                     </a>
@@ -212,7 +268,7 @@ const Admission = () => {
               <div className="pe-lg-5">
                 <h2 className="fw-bold text-primary mb-4">Ready to Apply?</h2>
                 <p className="lead mb-4">
-                  Fill out this form and our admission team will contact you within 24 hours to 
+                  Fill out this form and our admission team will contact you within 24 hours to
                   guide you through the enrollment process.
                 </p>
                 <div className="bg-primary bg-opacity-10 p-4 rounded-3 mb-4">
@@ -233,19 +289,27 @@ const Admission = () => {
             <div className="col-lg-7" data-aos="fade-left">
               <div className="card border-0 shadow-lg">
                 <div className="card-body p-4 p-md-5">
-                  {submitted ? (
-                    <div className="text-center py-5">
-                      <FiCheckCircle className="display-4 text-success mb-3" />
-                      <h3 className="mb-3">Application Submitted!</h3>
-                      <p className="text-muted mb-4">
-                        Thank you for your interest. Our admission team will contact you shortly.
-                      </p>
-                      <button 
-                        className="btn btn-outline-primary"
-                        onClick={() => setSubmitted(false)}
-                      >
-                        Submit Another Application
-                      </button>
+                  {statusMessage ? ( // Display status message if available
+                    <div className={`text-center py-4 alert ${isSuccess ? 'alert-success' : 'alert-danger'} animate__animated ${isSuccess ? 'animate__fadeIn' : 'animate__shakeX'}`}>
+{isSuccess ? <FiCheckCircle className="display-4 mb-3 text-success" /> : <FaExclamationCircle className="display-4 mb-3 text-danger" />}
+                      <h3 className="mb-3">{isSuccess ? 'Application Submitted!' : 'Submission Failed!'}</h3>
+                      <p className="text-muted mb-4">{statusMessage}</p>
+                      {!isSuccess && ( // Option to try again on error
+                        <button
+                          className="btn btn-outline-primary"
+                          onClick={() => setStatusMessage('')} // Clear message to show form again
+                        >
+                          Try Again
+                        </button>
+                      )}
+                      {isSuccess && ( // Option to submit another on success
+                         <button
+                           className="btn btn-outline-primary"
+                           onClick={() => setStatusMessage('')} // Clear message to show form again
+                         >
+                           Submit Another Application
+                         </button>
+                      )}
                     </div>
                   ) : (
                     <>
@@ -261,6 +325,7 @@ const Admission = () => {
                               value={formData.name}
                               onChange={handleChange}
                               required
+                              disabled={loading} // Disable while loading
                             />
                           </div>
                           <div className="col-md-6">
@@ -271,6 +336,7 @@ const Admission = () => {
                               className="form-control"
                               value={formData.email}
                               onChange={handleChange}
+                              disabled={loading} // Disable while loading
                             />
                           </div>
                           <div className="col-md-6">
@@ -282,6 +348,7 @@ const Admission = () => {
                               value={formData.phone}
                               onChange={handleChange}
                               required
+                              disabled={loading} // Disable while loading
                             />
                           </div>
                           <div className="col-md-6">
@@ -292,6 +359,7 @@ const Admission = () => {
                               value={formData.course}
                               onChange={handleChange}
                               required
+                              disabled={loading} // Disable while loading
                             >
                               <option value="">Select Course</option>
                               {courses.map((course, i) => (
@@ -307,14 +375,24 @@ const Admission = () => {
                               rows="4"
                               value={formData.message}
                               onChange={handleChange}
+                              disabled={loading} // Disable while loading
                             ></textarea>
                           </div>
                           <div className="col-12 mt-4">
-                            <button 
-                              type="submit" 
+                            <button
+                              type="submit"
                               className="btn btn-primary w-100 py-3"
+                              disabled={loading} // Disable button while loading
                             >
-                              Submit Application
+                              {loading ? (
+                                <>
+                                  <FaSpinner className="me-2 spinner-border spinner-border-sm" /> Submitting...
+                                </>
+                              ) : (
+                                <>
+                                  <FiMail className="me-2" /> Submit Application
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -333,16 +411,16 @@ const Admission = () => {
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
-              <img 
-                src={campusImg} 
-                alt="Dream Technical College Campus" 
-                className="img-fluid rounded-3 shadow" 
+              <img
+                src={campusImg}
+                alt="Dream Technical College Campus"
+                className="img-fluid rounded-3 shadow"
               />
             </div>
             <div className="col-lg-6 ps-lg-5" data-aos="fade-left">
               <h2 className="fw-bold mb-4">Schedule a Campus Tour</h2>
               <p className="lead mb-4">
-                Experience our facilities firsthand. Visit our campus and meet with faculty members 
+                Experience our facilities firsthand. Visit our campus and meet with faculty members
                 to learn more about our programs.
               </p>
               <button className="btn btn-outline-light btn-lg px-4">

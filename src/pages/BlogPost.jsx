@@ -231,7 +231,7 @@ const BlogPost = () => {
         <p>The requested blog post could not be found.</p>
         <button 
           className="btn btn-primary mt-3"
-          onClick={() => navigate('/blogs')}
+          onClick={() => navigate('/blog')}
         >
           Back to Blog
         </button>

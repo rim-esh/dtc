@@ -1,3 +1,16 @@
+/* src/assets/styles/Courses.css */
+:root {
+  --primary: #0d6efd;
+  --primary-dark: #0a2d6d;
+  --secondary: #6c757d;
+  --light: #f8f9fa;
+  --dark: #212529;
+}
+
+.courses-page {
+  font-family: 'Inter', sans-serif;
+}
+
 /* Hero Section */
 .courses-hero {
   position: relative;
@@ -5,6 +18,7 @@
   background-size: cover;
   color: white;
   padding: 100px 0;
+  overflow: hidden;
 }
 
 .courses-hero::before {
@@ -18,9 +32,60 @@
   z-index: 0;
 }
 
-.courses-hero .container {
+.hero-circles {
   position: relative;
-  z-index: 1;
+  height: 400px;
+}
+
+.hero-circles .circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.circle-1 {
+  width: 300px;
+  height: 300px;
+  top: 50px;
+  left: 50px;
+}
+
+.circle-2 {
+  width: 200px;
+  height: 200px;
+  top: 120px;
+  left: 200px;
+}
+
+.circle-3 {
+  width: 150px;
+  height: 150px;
+  top: 50px;
+  left: 300px;
+}
+
+/* Stats Bar */
+.stats-bar {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--secondary);
 }
 
 /* Search Box */
@@ -41,28 +106,36 @@
   border-radius: 50px;
   border: none;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  height: 55px;
+  font-size: 1rem;
 }
 
 /* Category Filter */
 .category-filter .btn {
   border-radius: 50px;
-  padding: 8px 16px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .category-filter .btn.active {
-  background-color: var(--bs-primary);
+  background-color: var(--primary);
   color: white;
+  border-color: var(--primary);
 }
 
 /* Course Cards */
 .course-card {
   transition: all 0.3s ease;
   border-radius: 12px;
+  cursor: pointer;
+  height: 100%;
+  overflow: hidden;
 }
 
 .course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
 .hover-lift:hover {
@@ -70,14 +143,95 @@
 }
 
 .course-meta {
-  background-color: var(--bs-light);
-  padding: 12px;
+  background-color: var(--light);
+  padding: 15px;
   border-radius: 8px;
+  font-size: 0.9rem;
 }
 
 .course-features {
   border-top: 1px solid var(--bs-gray-200);
   padding-top: 16px;
+}
+
+/* Testimonials */
+.testimonial-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 25px;
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+}
+
+.avatar-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Course Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.course-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 30px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+  padding: 30px 0;
+}
+
+.syllabus-list {
+  list-style: none;
+  padding: 0;
+}
+
+.syllabus-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.enrollment-card {
+  background: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 /* Responsive Adjustments */
@@ -89,5 +243,22 @@
   
   .search-box, .category-filter {
     margin-bottom: 20px;
+  }
+  
+  .hero-circles {
+    display: none;
+  }
+  
+  .course-modal {
+    width: 95%;
+    padding: 15px;
+  }
+  
+  .modal-body .row > div {
+    width: 100%;
+  }
+  
+  .enrollment-card {
+    margin-top: 20px;
   }
 }
